@@ -19,3 +19,4 @@
 [Thursday, August 28, 2025 12:16 PM] Completed: Design JSON schema for character presets
 [Thursday, August 28, 2025 1:32 PM] Completed: Set up wireframe/solid toggle for debugging
 [Thursday, August 28, 2025 1:50 PM] Completed: Setup asset pipeline for model imports
+[Thursday, August 28, 2025 2:39 PM] Completed: Implement core event bus for UI-to-Engine communication
