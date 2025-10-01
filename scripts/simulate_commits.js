@@ -40,8 +40,8 @@ function parseSchedule() {
   
   // Sort tasks chronologically just in case
   const sortedTasks = tasks.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
-  // Filter for Batch 1 (Aug - Sept)
-  return sortedTasks.filter(task => task.dateObj < new Date('2025-10-01'));
+  // Filter for Batch 2 (Oct - Nov)
+  return sortedTasks.filter(task => task.dateObj >= new Date('2025-10-01') && task.dateObj < new Date('2025-12-01'));
 }
 
 function getWeekNumber(d) {
