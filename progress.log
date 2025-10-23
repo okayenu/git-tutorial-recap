@@ -487,3 +487,5 @@
 [Thursday, October 23, 2025 12:52 PM] Completed: Implement strand-based hair rendering system
 [Thursday, October 23, 2025 2:34 PM] Completed: Implement hair LODs for performance optimization
 [Thursday, October 23, 2025 4:29 PM] Completed: Add baldness/receding hairline masking
+[Thursday, October 23, 2025 5:06 PM] Completed: Implement hair color and root/tip gradient picking
+[Thursday, October 23, 2025 5:06 PM] Completed: Set up specular highlights for hair shader
