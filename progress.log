@@ -624,3 +624,4 @@
 [Wednesday, November 26, 2025 12:47 PM] Completed: Add screenshot capture with transparent background
 [Wednesday, November 26, 2025 1:10 PM] Completed: Add JSON/Binary export of character configuration
 [Wednesday, November 26, 2025 5:50 PM] Completed: Implement seamless LOD transitions
+[Friday, November 28, 2025 9:23 AM] Completed: Implement undo/redo stack for modifications
