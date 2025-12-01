@@ -21,20 +21,54 @@ const Sidebar: React.FC = () => {
   const { 
     gender, setGender, 
     wireframe, setWireframe, 
+    photobooth, setPhotobooth,
     morphs, setMorph, 
     bones, setBoneScale,
     skinTone, setSkinTone,
     roughness, setRoughness,
     hairColor, setHairColor,
     lipstickColor, lipstickOpacity, setLipstick,
-    tattooOpacity, setTattooOpacity
+    tattooOpacity, setTattooOpacity,
+    undo, redo, exportPreset, importPreset,
+    history, historyIndex, commitHistory
   } = useCharacterStore();
   const [tab, setTab] = useState<'face' | 'body' | 'skin' | 'settings'>('face');
+
+  const handleImport = () => {
+    const json = prompt("Paste your Character Preset JSON here:");
+    if (json) {
+      importPreset(json);
+    }
+  };
+
+  const handleExport = () => {
+    const json = exportPreset();
+    navigator.clipboard.writeText(json);
+    alert("Preset JSON copied to clipboard!");
+  };
 
   return (
     <div className="w-80 h-full bg-black/40 backdrop-blur-xl text-gray-200 shadow-[0_0_40px_rgba(0,0,0,0.5)] flex flex-col z-10 border-l border-white/10">
       <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
         <h1 className="text-xl font-bold text-white tracking-wide drop-shadow-md">Customization</h1>
+        <div className="flex space-x-2">
+          <button 
+            onClick={undo} 
+            disabled={historyIndex <= 0}
+            className="px-2 py-1 bg-white/10 hover:bg-white/20 disabled:opacity-30 rounded text-xs transition-colors"
+            title="Undo"
+          >
+            ↩ Undo
+          </button>
+          <button 
+            onClick={redo} 
+            disabled={historyIndex >= history.length - 1}
+            className="px-2 py-1 bg-white/10 hover:bg-white/20 disabled:opacity-30 rounded text-xs transition-colors"
+            title="Redo"
+          >
+            ↪ Redo
+          </button>
+        </div>
       </div>
 
       <div className="flex border-b border-white/10 bg-black/20 text-xs">
@@ -81,6 +115,9 @@ const Sidebar: React.FC = () => {
                   step="0.01"
                   value={morphs[morph.name] || 0}
                   onChange={(e) => setMorph(morph.name, parseFloat(e.target.value))}
+                  onMouseUp={commitHistory}
+                  onTouchEnd={commitHistory}
+                  title={`Adjust ${morph.label} (0.0 to 1.0)`}
                   className="w-full h-2 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-400 backdrop-blur-sm border border-white/10 shadow-inner"
                 />
               </div>
@@ -104,6 +141,9 @@ const Sidebar: React.FC = () => {
                   step="0.01"
                   value={bones[bone.name] || 1}
                   onChange={(e) => setBoneScale(bone.name, parseFloat(e.target.value))}
+                  onMouseUp={commitHistory}
+                  onTouchEnd={commitHistory}
+                  title={`Scale ${bone.label} (0.5x to 1.5x)`}
                   className="w-full h-2 bg-black/40 rounded-lg appearance-none cursor-pointer accent-green-400 backdrop-blur-sm border border-white/10 shadow-inner"
                 />
               </div>
@@ -139,6 +179,9 @@ const Sidebar: React.FC = () => {
                   step="0.01"
                   value={roughness}
                   onChange={(e) => setRoughness(parseFloat(e.target.value))}
+                  onMouseUp={commitHistory}
+                  onTouchEnd={commitHistory}
+                  title="Adjust Skin Roughness/Oiliness"
                   className="w-full h-2 bg-black/40 rounded-lg appearance-none cursor-pointer accent-orange-400 backdrop-blur-sm border border-white/10 shadow-inner"
                 />
               </div>
@@ -155,6 +198,9 @@ const Sidebar: React.FC = () => {
                   step="0.01"
                   value={tattooOpacity}
                   onChange={(e) => setTattooOpacity(parseFloat(e.target.value))}
+                  onMouseUp={commitHistory}
+                  onTouchEnd={commitHistory}
+                  title="Adjust Decal Opacity"
                   className="w-full h-2 bg-black/40 rounded-lg appearance-none cursor-pointer accent-indigo-400 backdrop-blur-sm border border-white/10 shadow-inner"
                 />
               </div>
@@ -193,6 +239,8 @@ const Sidebar: React.FC = () => {
                     step="0.01"
                     value={lipstickOpacity}
                     onChange={(e) => setLipstick(lipstickColor, parseFloat(e.target.value))}
+                    onMouseUp={commitHistory}
+                    onTouchEnd={commitHistory}
                     className="flex-1 h-8 bg-black/40 rounded-lg appearance-none cursor-pointer accent-pink-500 backdrop-blur-sm border border-white/10 shadow-inner"
                     title="Lipstick Opacity"
                   />
@@ -223,8 +271,8 @@ const Sidebar: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">Rendering</h2>
-              <label className="flex items-center space-x-3 cursor-pointer p-3 bg-black/30 backdrop-blur-md rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-300 shadow-sm">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">Rendering & Env</h2>
+              <label className="flex items-center space-x-3 cursor-pointer p-3 bg-black/30 backdrop-blur-md rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-300 shadow-sm" title="Show mesh wireframes">
                 <input
                   type="checkbox"
                   checked={wireframe}
@@ -233,6 +281,36 @@ const Sidebar: React.FC = () => {
                 />
                 <span className="text-sm text-gray-200">Wireframe Debug Mode</span>
               </label>
+
+              <label className="flex items-center space-x-3 cursor-pointer p-3 bg-black/30 backdrop-blur-md rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-300 shadow-sm" title="Enable studio lighting and dark background">
+                <input
+                  type="checkbox"
+                  checked={photobooth}
+                  onChange={(e) => setPhotobooth(e.target.checked)}
+                  className="w-4 h-4 rounded text-blue-500 focus:ring-blue-500 bg-black/50 border-white/20"
+                />
+                <span className="text-sm text-gray-200">Photobooth Mode</span>
+              </label>
+            </div>
+
+            <div className="space-y-3 pt-4 border-t border-white/10">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">Preset Management</h2>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={handleExport}
+                  title="Export Current Configuration to JSON"
+                  className="flex-1 p-2 bg-indigo-600/50 hover:bg-indigo-600 border border-indigo-400/30 rounded text-sm transition-all shadow-md"
+                >
+                  Export JSON
+                </button>
+                <button 
+                  onClick={handleImport}
+                  title="Import Configuration from JSON"
+                  className="flex-1 p-2 bg-emerald-600/50 hover:bg-emerald-600 border border-emerald-400/30 rounded text-sm transition-all shadow-md"
+                >
+                  Import JSON
+                </button>
+              </div>
             </div>
           </div>
         )}
