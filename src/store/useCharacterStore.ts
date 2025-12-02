@@ -8,8 +8,9 @@ interface BoneScaleValues {
   [key: string]: number;
 }
 
-export interface CharacterStateData {
+interface CharacterState {
   gender: 'female' | 'male';
+  wireframe: boolean;
   morphs: MorphTargetValues;
   bones: BoneScaleValues;
   skinTone: string;
@@ -18,21 +19,8 @@ export interface CharacterStateData {
   lipstickColor: string;
   lipstickOpacity: number;
   tattooOpacity: number;
-}
-
-interface CharacterState extends CharacterStateData {
-  wireframe: boolean;
-  photobooth: boolean;
-  
-  // History
-  history: CharacterStateData[];
-  historyIndex: number;
-
-  // Actions
   setGender: (gender: 'female' | 'male') => void;
   setWireframe: (wireframe: boolean) => void;
-  setPhotobooth: (photobooth: boolean) => void;
-  
   setMorph: (name: string, value: number) => void;
   setBoneScale: (name: string, value: number) => void;
   setSkinTone: (color: string) => void;
@@ -40,16 +28,11 @@ interface CharacterState extends CharacterStateData {
   setHairColor: (color: string) => void;
   setLipstick: (color: string, opacity: number) => void;
   setTattooOpacity: (value: number) => void;
-
-  undo: () => void;
-  redo: () => void;
-  commitHistory: () => void;
-  exportPreset: () => string;
-  importPreset: (json: string) => void;
 }
 
-const getBaseState = (): CharacterStateData => ({
+export const useCharacterStore = create<CharacterState>((set) => ({
   gender: 'female',
+  wireframe: false,
   morphs: {},
   bones: {},
   skinTone: '#ffcbb3',
@@ -58,108 +41,15 @@ const getBaseState = (): CharacterStateData => ({
   lipstickColor: '#cc2244',
   lipstickOpacity: 0,
   tattooOpacity: 0,
-});
-
-export const useCharacterStore = create<CharacterState>((set, get) => ({
-  ...getBaseState(),
-  wireframe: false,
-  photobooth: false,
-  history: [getBaseState()],
-  historyIndex: 0,
-
-  commitHistory: () => {
-    const state = get();
-    const currentStateData: CharacterStateData = {
-      gender: state.gender,
-      morphs: { ...state.morphs },
-      bones: { ...state.bones },
-      skinTone: state.skinTone,
-      roughness: state.roughness,
-      hairColor: state.hairColor,
-      lipstickColor: state.lipstickColor,
-      lipstickOpacity: state.lipstickOpacity,
-      tattooOpacity: state.tattooOpacity,
-    };
-    
-    const newHistory = state.history.slice(0, state.historyIndex + 1);
-    newHistory.push(currentStateData);
-    
-    if (newHistory.length > 50) {
-      newHistory.shift();
-    }
-    
-    set({ history: newHistory, historyIndex: newHistory.length - 1 });
-  },
-
-  undo: () => {
-    const state = get();
-    if (state.historyIndex > 0) {
-      const prevIndex = state.historyIndex - 1;
-      set({ ...state.history[prevIndex], historyIndex: prevIndex });
-    }
-  },
-
-  redo: () => {
-    const state = get();
-    if (state.historyIndex < state.history.length - 1) {
-      const nextIndex = state.historyIndex + 1;
-      set({ ...state.history[nextIndex], historyIndex: nextIndex });
-    }
-  },
-
-  exportPreset: () => {
-    const state = get();
-    const data: CharacterStateData = {
-      gender: state.gender,
-      morphs: state.morphs,
-      bones: state.bones,
-      skinTone: state.skinTone,
-      roughness: state.roughness,
-      hairColor: state.hairColor,
-      lipstickColor: state.lipstickColor,
-      lipstickOpacity: state.lipstickOpacity,
-      tattooOpacity: state.tattooOpacity,
-    };
-    return JSON.stringify(data, null, 2);
-  },
-
-  importPreset: (json) => {
-    try {
-      const data: CharacterStateData = JSON.parse(json);
-      set({ ...data });
-      get().commitHistory();
-    } catch (e) {
-      console.error("Invalid preset JSON");
-    }
-  },
-
-  setGender: (gender) => {
-    set({ gender, morphs: {}, bones: {} });
-    get().commitHistory();
-  },
+  setGender: (gender) => set({ gender, morphs: {}, bones: {} }), // Reset morphs/bones on gender change
   setWireframe: (wireframe) => set({ wireframe }),
-  setPhotobooth: (photobooth) => set({ photobooth }),
-  setMorph: (name, value) => {
-    set((state) => ({ morphs: { ...state.morphs, [name]: value } }));
-  },
-  setBoneScale: (name, value) => {
-    set((state) => ({ bones: { ...state.bones, [name]: value } }));
-  },
-  setSkinTone: (color) => { 
-    set({ skinTone: color }); 
-    get().commitHistory(); 
-  },
-  setRoughness: (value) => { 
-    set({ roughness: value }); 
-  },
-  setHairColor: (color) => { 
-    set({ hairColor: color }); 
-    get().commitHistory(); 
-  },
-  setLipstick: (color, opacity) => { 
-    set({ lipstickColor: color, lipstickOpacity: opacity }); 
-  },
-  setTattooOpacity: (value) => { 
-    set({ tattooOpacity: value }); 
-  },
+  setMorph: (name, value) =>
+    set((state) => ({ morphs: { ...state.morphs, [name]: value } })),
+  setBoneScale: (name, value) =>
+    set((state) => ({ bones: { ...state.bones, [name]: value } })),
+  setSkinTone: (color) => set({ skinTone: color }),
+  setRoughness: (value) => set({ roughness: value }),
+  setHairColor: (color) => set({ hairColor: color }),
+  setLipstick: (color, opacity) => set({ lipstickColor: color, lipstickOpacity: opacity }),
+  setTattooOpacity: (value) => set({ tattooOpacity: value }),
 }));
