@@ -207,7 +207,7 @@ const Sidebar: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">Hair & Makeup</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">Hair & Features</h2>
               
               <div className="space-y-1">
                 <div className="flex justify-between mb-1">
@@ -221,17 +221,38 @@ const Sidebar: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-1">
-                <div className="flex justify-between mb-1">
-                  <label className="text-sm">Lipstick Color</label>
+              {gender === 'female' ? (
+                <div className="space-y-1">
+                  <div className="flex justify-between mb-1">
+                    <label className="text-sm">Lipstick Color</label>
+                  </div>
+                  <div className="flex space-x-2">
+                    <input
+                      type="color"
+                      value={lipstickColor}
+                      onChange={(e) => setLipstick(e.target.value, lipstickOpacity)}
+                      className="flex-1 h-8 bg-black/40 rounded border border-white/10 cursor-pointer"
+                    />
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={lipstickOpacity}
+                      onChange={(e) => setLipstick(lipstickColor, parseFloat(e.target.value))}
+                      onMouseUp={commitHistory}
+                      onTouchEnd={commitHistory}
+                      className="flex-1 h-8 bg-black/40 rounded-lg appearance-none cursor-pointer accent-pink-500 backdrop-blur-sm border border-white/10 shadow-inner"
+                      title="Lipstick Opacity"
+                    />
+                  </div>
                 </div>
-                <div className="flex space-x-2">
-                  <input
-                    type="color"
-                    value={lipstickColor}
-                    onChange={(e) => setLipstick(e.target.value, lipstickOpacity)}
-                    className="flex-1 h-8 bg-black/40 rounded border border-white/10 cursor-pointer"
-                  />
+              ) : (
+                <div className="space-y-1">
+                  <div className="flex justify-between mb-1">
+                    <label className="text-sm">Facial Hair Opacity</label>
+                    <span className="text-xs text-gray-400">{lipstickOpacity.toFixed(2)}</span>
+                  </div>
                   <input
                     type="range"
                     min="0"
@@ -241,11 +262,11 @@ const Sidebar: React.FC = () => {
                     onChange={(e) => setLipstick(lipstickColor, parseFloat(e.target.value))}
                     onMouseUp={commitHistory}
                     onTouchEnd={commitHistory}
-                    className="flex-1 h-8 bg-black/40 rounded-lg appearance-none cursor-pointer accent-pink-500 backdrop-blur-sm border border-white/10 shadow-inner"
-                    title="Lipstick Opacity"
+                    className="w-full h-2 bg-black/40 rounded-lg appearance-none cursor-pointer accent-amber-700 backdrop-blur-sm border border-white/10 shadow-inner"
+                    title="Facial Hair Opacity"
                   />
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
