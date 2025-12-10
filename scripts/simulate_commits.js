@@ -56,64 +56,66 @@ async function takeScreenshot(browser, dateObj, label, weekNum) {
     fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
   }
 
-  const page = await browser.newPage();
-  
-  try {
-    await page.goto('http://localhost:3000', { waitUntil: 'networkidle0', timeout: 10000 });
+  for (const targetGender of ['Female', 'Male']) {
+    const page = await browser.newPage();
     
-    // Switch to Settings to reveal Gender buttons
-    await page.evaluate(() => {
-      const settingsBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('Settings'));
-      if (settingsBtn) settingsBtn.click();
-    });
-    await new Promise(r => setTimeout(r, 300));
-    
-    // Click Male
-    await page.evaluate(() => {
-      const maleBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText === 'Male');
-      if (maleBtn) maleBtn.click();
-    });
-    await new Promise(r => setTimeout(r, 1000)); // Wait for 3D model to load
-    
-    // Switch to target tab
-    await page.evaluate((week) => {
-      const tabs = ['Face', 'Body', 'Skin/Hair', 'Settings'];
-      const targetTab = tabs[week % 4];
-      const targetBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes(targetTab));
-      if (targetBtn) targetBtn.click();
-    }, weekNum || 0);
-    await new Promise(r => setTimeout(r, 500));
+    try {
+      await page.goto('http://localhost:3000', { waitUntil: 'networkidle0', timeout: 10000 });
+      
+      // Switch to Settings to reveal Gender buttons
+      await page.evaluate(() => {
+        const settingsBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('Settings'));
+        if (settingsBtn) settingsBtn.click();
+      });
+      await new Promise(r => setTimeout(r, 300));
+      
+      // Click gender
+      await page.evaluate((gender) => {
+        const btn = Array.from(document.querySelectorAll('button')).find(b => b.innerText === gender);
+        if (btn) btn.click();
+      }, targetGender);
+      await new Promise(r => setTimeout(r, 1000)); // Wait for 3D model to load
+      
+      // Switch to target tab
+      await page.evaluate((week) => {
+        const tabs = ['Face', 'Body', 'Skin/Hair', 'Settings'];
+        const targetTab = tabs[week % 4];
+        const targetBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes(targetTab));
+        if (targetBtn) targetBtn.click();
+      }, weekNum || 0);
+      await new Promise(r => setTimeout(r, 500));
 
-    // Inject a timestamp overlay
-    const timestampStr = dateObj.toLocaleString();
-    await page.evaluate((ts) => {
-      const overlay = document.createElement('div');
-      overlay.style.position = 'absolute';
-      overlay.style.bottom = '20px';
-      overlay.style.right = '20px';
-      overlay.style.backgroundColor = 'rgba(0,0,0,0.7)';
-      overlay.style.color = 'white';
-      overlay.style.padding = '10px 20px';
-      overlay.style.borderRadius = '5px';
-      overlay.style.fontSize = '24px';
-      overlay.style.fontWeight = 'bold';
-      overlay.style.zIndex = '9999';
-      overlay.innerText = ts;
-      document.body.appendChild(overlay);
-    }, timestampStr);
+      // Inject a timestamp overlay
+      const timestampStr = dateObj.toLocaleString();
+      await page.evaluate((ts) => {
+        const overlay = document.createElement('div');
+        overlay.style.position = 'absolute';
+        overlay.style.bottom = '20px';
+        overlay.style.right = '20px';
+        overlay.style.backgroundColor = 'rgba(0,0,0,0.7)';
+        overlay.style.color = 'white';
+        overlay.style.padding = '10px 20px';
+        overlay.style.borderRadius = '5px';
+        overlay.style.fontSize = '24px';
+        overlay.style.fontWeight = 'bold';
+        overlay.style.zIndex = '9999';
+        overlay.innerText = ts;
+        document.body.appendChild(overlay);
+      }, timestampStr);
 
-    // Give it a moment to render
-    await new Promise(r => setTimeout(r, 1000));
-    
-    const safeDate = timestampStr.replace(/[:/,]/g, '-').replace(/ /g, '_');
-    const filepath = path.join(SCREENSHOT_DIR, `screenshot_${safeDate}_Male.png`);
-    
-    await page.screenshot({ path: filepath });
-    console.log(`Screenshot saved: ${filepath}`);
-  } catch (err) {
-    console.error(`Failed to take screenshot for ${label}:`, err.message);
-  } finally {
-    await page.close();
+      // Give it a moment to render
+      await new Promise(r => setTimeout(r, 1000));
+      
+      const safeDate = timestampStr.replace(/[:/,]/g, '-').replace(/ /g, '_');
+      const filepath = path.join(SCREENSHOT_DIR, `screenshot_${safeDate}_${targetGender}.png`);
+      
+      await page.screenshot({ path: filepath });
+      console.log(`Screenshot saved: ${filepath}`);
+    } catch (err) {
+      console.error(`Failed to take screenshot for ${label} (${targetGender}):`, err.message);
+    } finally {
+      await page.close();
+    }
   }
 }
 
@@ -142,6 +144,7 @@ async function runSimulation() {
     console.log(`Processing Task: [${task.dateStr}] ${task.description}`);
 
     // Create an incremental change
+    /*
     const logEntry = `[${task.dateStr}] Completed: ${task.description}\n`;
     fs.appendFileSync(dummyFile, logEntry);
 
@@ -161,6 +164,7 @@ async function runSimulation() {
       console.error(`Git commit failed for task: ${task.description}`);
       console.error(err.message);
     }
+    */
 
     // Take screenshot if it's a new week
     if (browser && task.weekNum !== lastWeek) {
