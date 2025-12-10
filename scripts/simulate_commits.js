@@ -40,8 +40,8 @@ function parseSchedule() {
   
   // Sort tasks chronologically just in case
   const sortedTasks = tasks.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
-  // Filter for Batch 2 (Oct - Nov)
-  return sortedTasks.filter(task => task.dateObj >= new Date('2025-10-01') && task.dateObj < new Date('2025-12-01'));
+  // Filter for Batch 3 (Dec)
+  return sortedTasks.filter(task => task.dateObj >= new Date('2025-12-01'));
 }
 
 function getWeekNumber(d) {
@@ -51,7 +51,7 @@ function getWeekNumber(d) {
   return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
 }
 
-async function takeScreenshot(browser, dateObj, label) {
+async function takeScreenshot(browser, dateObj, label, weekNum) {
   if (!fs.existsSync(SCREENSHOT_DIR)) {
     fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
   }
@@ -61,6 +61,29 @@ async function takeScreenshot(browser, dateObj, label) {
   try {
     await page.goto('http://localhost:3000', { waitUntil: 'networkidle0', timeout: 10000 });
     
+    // Switch to Settings to reveal Gender buttons
+    await page.evaluate(() => {
+      const settingsBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('Settings'));
+      if (settingsBtn) settingsBtn.click();
+    });
+    await new Promise(r => setTimeout(r, 300));
+    
+    // Click Male
+    await page.evaluate(() => {
+      const maleBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText === 'Male');
+      if (maleBtn) maleBtn.click();
+    });
+    await new Promise(r => setTimeout(r, 1000)); // Wait for 3D model to load
+    
+    // Switch to target tab
+    await page.evaluate((week) => {
+      const tabs = ['Face', 'Body', 'Skin/Hair', 'Settings'];
+      const targetTab = tabs[week % 4];
+      const targetBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes(targetTab));
+      if (targetBtn) targetBtn.click();
+    }, weekNum || 0);
+    await new Promise(r => setTimeout(r, 500));
+
     // Inject a timestamp overlay
     const timestampStr = dateObj.toLocaleString();
     await page.evaluate((ts) => {
@@ -83,7 +106,7 @@ async function takeScreenshot(browser, dateObj, label) {
     await new Promise(r => setTimeout(r, 1000));
     
     const safeDate = timestampStr.replace(/[:/,]/g, '-').replace(/ /g, '_');
-    const filepath = path.join(SCREENSHOT_DIR, `screenshot_${safeDate}.png`);
+    const filepath = path.join(SCREENSHOT_DIR, `screenshot_${safeDate}_Male.png`);
     
     await page.screenshot({ path: filepath });
     console.log(`Screenshot saved: ${filepath}`);
@@ -143,7 +166,7 @@ async function runSimulation() {
     if (browser && task.weekNum !== lastWeek) {
       lastWeek = task.weekNum;
       console.log(`New week detected (Week ${task.weekNum}). Taking weekly screenshot...`);
-      await takeScreenshot(browser, task.dateObj, `Week ${task.weekNum}`);
+      await takeScreenshot(browser, task.dateObj, `Week ${task.weekNum}`, task.weekNum);
     }
   }
 
