@@ -4,11 +4,18 @@ import Sidebar from './components/Sidebar';
 
 function App() {
   return (
-    <div className="w-full h-full flex">
-      <div className="flex-1 relative">
+    <div className="w-full h-full relative overflow-hidden bg-black">
+      {/* 3D Scene Background */}
+      <div className="absolute inset-0">
         <Scene />
       </div>
-      <Sidebar />
+      
+      {/* Overlay UI */}
+      <div className="absolute top-0 right-0 h-full pointer-events-none">
+        <div className="pointer-events-auto h-full">
+          <Sidebar />
+        </div>
+      </div>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useCharacterStore } from '../store/useCharacterStore';
 import * as THREE from 'three';
 
 const Character: React.FC = () => {
-  const { gender, wireframe, morphs, bones } = useCharacterStore();
+  const { gender, wireframe, morphs, bones, skinTone, roughness, hairColor, lipstickColor, lipstickOpacity, tattooOpacity } = useCharacterStore();
   const group = useRef<THREE.Group>(null);
   
   // Load models from public folder
@@ -20,14 +20,36 @@ const Character: React.FC = () => {
     gltf.scene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
-        // Material handling
         if (mesh.material) {
+          const updateMaterial = (mat: any) => {
+            if ('wireframe' in mat) mat.wireframe = wireframe;
+            if ('color' in mat && mat.name) {
+              const name = mat.name.toLowerCase();
+              if (name.includes('hair')) {
+                mat.color.set(hairColor);
+              } else if (name.includes('skin') || name.includes('body') || name.includes('face') || name.includes('head')) {
+                mat.color.set(skinTone);
+                if ('roughness' in mat) mat.roughness = roughness;
+                
+                // Pseudo-implementation of makeup/lipstick via blending color on material (if supported)
+                // Realistically, decals/tattoos require secondary UVs, multi-material layering or custom shaders.
+                // We mock visual update here if it's the lips
+              } else if (name.includes('lip') || name.includes('mouth')) {
+                // If the model has a separate lips material
+                const lipBase = new THREE.Color(skinTone);
+                const lipTint = new THREE.Color(lipstickColor);
+                mat.color.copy(lipBase.lerp(lipTint, lipstickOpacity));
+              }
+            } else if ('color' in mat && !mat.name) {
+              // Fallback for unnamed materials
+              mat.color.set(skinTone);
+            }
+          };
+
           if (Array.isArray(mesh.material)) {
-            mesh.material.forEach((mat) => {
-              if ('wireframe' in mat) mat.wireframe = wireframe;
-            });
+            mesh.material.forEach(updateMaterial);
           } else {
-            if ('wireframe' in mesh.material) mesh.material.wireframe = wireframe;
+            updateMaterial(mesh.material);
           }
         }
 
@@ -55,7 +77,7 @@ const Character: React.FC = () => {
         }
       }
     });
-  }, [gltf.scene, wireframe, morphs, bones]);
+  }, [gltf.scene, wireframe, morphs, bones, skinTone, roughness, hairColor, lipstickColor, lipstickOpacity, tattooOpacity]);
 
   return <primitive ref={group} object={gltf.scene} />;
 };
