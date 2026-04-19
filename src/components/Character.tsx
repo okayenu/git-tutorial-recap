@@ -25,9 +25,13 @@ const Character: React.FC = () => {
             if ('wireframe' in mat) mat.wireframe = wireframe;
             if ('color' in mat && mat.name) {
               const name = mat.name.toLowerCase();
+              
+              // Define keywords for skin parts
+              const isSkin = ['skin', 'body', 'face', 'head', 'torso', 'limb', 'arm', 'leg', 'hand', 'foot', 'neck', 'chest', 'pelvis'].some(part => name.includes(part));
+              
               if (name.includes('hair')) {
                 mat.color.set(hairColor);
-              } else if (name.includes('skin') || name.includes('body') || name.includes('face') || name.includes('head')) {
+              } else if (isSkin) {
                 mat.color.set(skinTone);
                 if ('roughness' in mat) mat.roughness = roughness;
                 
@@ -39,6 +43,11 @@ const Character: React.FC = () => {
                 const lipBase = new THREE.Color(skinTone);
                 const lipTint = new THREE.Color(lipstickColor);
                 mat.color.copy(lipBase.lerp(lipTint, lipstickOpacity));
+              } else {
+                // Catch-all for unnamed or differently named meshes that might be skin
+                if (!name.includes('eye') && !name.includes('cloth') && !name.includes('lash') && !name.includes('teeth') && !name.includes('tongue')) {
+                  mat.color.set(skinTone);
+                }
               }
             } else if ('color' in mat && !mat.name) {
               // Fallback for unnamed materials
